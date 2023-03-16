@@ -1,6 +1,6 @@
 mod math;
 use math::vectors::Vector3;
-use glfw::Context;
+//use glfw::Context;
 
 fn main() {
 	let a = Vector3::new(2, 5, 3);
@@ -13,7 +13,7 @@ fn main() {
 	println!("\"a\" has a magnitude of {} and an angle of {}", a.get_magnitude(), a.get_deg_dir());
 	println!("\"b\" has a magnitude of {} and an angle of {}", b.get_magnitude(), b.get_deg_dir());
 	println!("\"c\" has a magnitude of {} and an angle of {}", c.get_magnitude(), c.get_deg_dir());
-
+/* 
 	let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
 	let (mut window, _) = glfw.create_window(300, 300,
@@ -26,5 +26,5 @@ fn main() {
 	while !window.should_close() {
 		window.swap_buffers();
 		glfw.poll_events();
-	}
+	}*/
 }
