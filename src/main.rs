@@ -1,18 +1,16 @@
 mod math;
-use math::vectors::Vector3;
+use math::vectors::Vector2;
+use math::matrix::Matrix;
 //use glfw::Context;
 
 fn main() {
-	let a = Vector3::new(2, 5, 3);
-	let b = Vector3::new(3, 2, 4);
-	let c = &a * 2 - &b;
+  let t: Matrix<3> = Matrix::translate([1f64, 2f64, 1f64]);
+  let mut s: Matrix<1, 3> = Matrix::new(0f64);
 
-	println!("{}", a);
-	println!("{}", b);
-	println!("{}", c);
-	println!("\"a\" has a magnitude of {} and an angle of {}", a.get_magnitude(), a.get_deg_dir());
-	println!("\"b\" has a magnitude of {} and an angle of {}", b.get_magnitude(), b.get_deg_dir());
-	println!("\"c\" has a magnitude of {} and an angle of {}", c.get_magnitude(), c.get_deg_dir());
+  s.data = [[2f64], [3f64], [1f64]];
+
+  println!("{}", t * s);
+
 /* 
 	let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
