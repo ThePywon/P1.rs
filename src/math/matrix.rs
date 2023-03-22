@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 use std::ops::{Add, Sub, Mul};
+use super::vectors::{Vector2, Vector3};
 
 // Matrix definition
 #[derive(Clone, Copy)]
@@ -149,3 +150,22 @@ macro_rules! impl_mul_matrix {
 impl_matrix!(Add);
 impl_matrix!(Sub);
 impl_mul_matrix!();
+
+pub trait AsVector2 {
+  fn as_vector2(&self) -> Vector2<f64>;
+}
+pub trait AsVector3 {
+  fn as_vector3(&self) -> Vector3<f64>;
+}
+
+impl AsVector2 for Matrix<1, 3> {
+  fn as_vector2(&self) -> Vector2<f64> {
+    Vector2 { x: self.data[0][0], y: self.data[1][0] }
+  }
+}
+
+impl AsVector3 for Matrix<1, 4> {
+  fn as_vector3(&self) -> Vector3<f64> {
+    Vector3 { x: self.data[0][0], y: self.data[1][0], z: self.data[2][0] }
+  }
+}
