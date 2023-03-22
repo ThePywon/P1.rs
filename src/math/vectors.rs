@@ -15,10 +15,12 @@ pub struct Vector2<T: Vectory> {
 
 // Vector2 methods definition
 impl<T: Vectory> Vector2<T> {
+  #[allow(dead_code)]
 	pub fn new(x: T, y: T) -> Self {
 		Vector2 { x, y }
 	}
 
+  #[allow(dead_code)]
 	pub fn get_magnitude(&self) -> f64 {
 		let x = self.x.as_();
 		let y = self.y.as_();
@@ -26,6 +28,7 @@ impl<T: Vectory> Vector2<T> {
 		x.hypot(y)
 	}
 
+  #[allow(dead_code)]
 	pub fn get_rad_dir(&self) -> f64 {
 		let x = self.x.as_();
 		let y = self.y.as_();
@@ -33,6 +36,7 @@ impl<T: Vectory> Vector2<T> {
 		(y/x).atan()
 	}
 
+  #[allow(dead_code)]
 	pub fn get_deg_dir(&self) -> f64 {
 		self.get_rad_dir() * 57.2958f64
 	}
@@ -44,95 +48,74 @@ impl<T: Vectory + Display> Display for Vector2<T> {
 	}
 }
 
-// Vector2 add operator definition
-impl<T: Vectory> Add<Vector2<T>> for Vector2<T> {
-	type Output = Vector2<T>;
+// Vector operator definitions
+macro_rules! impl_vector {
+  ($op:ident, $id:ident) => {
+    impl_vector!(@inner $op, $id, [][]);
+    impl_vector!(@inner $op, $id, [][&]);
+    impl_vector!(@inner $op, $id, [&][]);
+    impl_vector!(@inner $op, $id, [&][&]);
+  };
 
-	fn add(self, rhs: Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x + rhs.x, y: self.y + rhs.y }
-	}
+  (@inner Add, Vector2, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Add<$($r_prefix)?Vector2<T>> for $($l_prefix)?Vector2<T> {
+      type Output = Vector2<T>;
+
+      fn add(self, rhs: $($r_prefix)?Vector2<T>) -> Vector2<T> {
+        Vector2 { x: self.x + rhs.x, y: self.y + rhs.y }
+      }
+    }
+  };
+  (@inner Add, Vector3, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Add<$($r_prefix)?Vector3<T>> for $($l_prefix)?Vector3<T> {
+      type Output = Vector3<T>;
+
+      fn add(self, rhs: $($r_prefix)?Vector3<T>) -> Vector3<T> {
+        Vector3 { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z }
+      }
+    }
+  };
+  (@inner Sub, Vector2, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Sub<$($r_prefix)?Vector2<T>> for $($l_prefix)?Vector2<T> {
+      type Output = Vector2<T>;
+
+      fn sub(self, rhs: $($r_prefix)?Vector2<T>) -> Vector2<T> {
+        Vector2 { x: self.x - rhs.x, y: self.y - rhs.y }
+      }
+    }
+  };
+  (@inner Sub, Vector3, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Sub<$($r_prefix)?Vector3<T>> for $($l_prefix)?Vector3<T> {
+      type Output = Vector3<T>;
+
+      fn sub(self, rhs: $($r_prefix)?Vector3<T>) -> Vector3<T> {
+        Vector3 { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z }
+      }
+    }
+  };
+  (@inner Mul, Vector2, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Mul<$($r_prefix)?Vector2<T>> for $($l_prefix)?Vector2<T> {
+      type Output = Vector2<T>;
+
+      fn mul(self, rhs: $($r_prefix)?Vector2<T>) -> Vector2<T> {
+        Vector2 { x: self.x * rhs.x, y: self.y * rhs.y }
+      }
+    }
+  };
+  (@inner Mul, Vector3, [$($l_prefix:tt)?] [$($r_prefix:tt)?]) => {
+    impl<T: Vectory> Mul<$($r_prefix)?Vector3<T>> for $($l_prefix)?Vector3<T> {
+      type Output = Vector3<T>;
+
+      fn mul(self, rhs: $($r_prefix)?Vector3<T>) -> Vector3<T> {
+        Vector3 { x: self.x * rhs.x, y: self.y * rhs.y, z: self.z * rhs.z }
+      }
+    }
+  };
 }
-impl<T: Vectory> Add<&Vector2<T>> for Vector2<T> {
-	type Output = Vector2<T>;
 
-	fn add(self, rhs: &Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x + rhs.x, y: self.y + rhs.y }
-	}
-}
-impl<T: Vectory> Add<Vector2<T>> for &Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn add(self, rhs: Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x + rhs.x, y: self.y + rhs.y }
-	}
-}
-impl<T: Vectory> Add<&Vector2<T>> for &Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn add(self, rhs: &Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x + rhs.x, y: self.y + rhs.y }
-	}
-}
-
-// Vector2 sub operator definition
-impl<T: Vectory> Sub<Vector2<T>> for Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn sub(self, rhs: Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x - rhs.x, y: self.y - rhs.y }
-	}
-}
-impl<T: Vectory> Sub<&Vector2<T>> for Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn sub(self, rhs: &Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x - rhs.x, y: self.y - rhs.y }
-	}
-}
-impl<T: Vectory> Sub<Vector2<T>> for &Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn sub(self, rhs: Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x - rhs.x, y: self.y - rhs.y }
-	}
-}
-impl<T: Vectory> Sub<&Vector2<T>> for &Vector2<T> {
-	type Output = Vector2<T>;
-
-	fn sub(self, rhs: &Vector2<T>) -> Vector2<T> {
-		Vector2 { x: self.x - rhs.x, y: self.y - rhs.y }
-	}
-}
-
-// Vector2 with Vector2 mul operator definition
-impl<T: Vectory> Mul<Vector2<T>> for Vector2<T> {
-	type Output = T;
-
-	fn mul(self, rhs: Vector2<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y
-	}
-}
-impl<T: Vectory> Mul<&Vector2<T>> for Vector2<T> {
-	type Output = T;
-
-	fn mul(self, rhs: &Vector2<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y
-	}
-}
-impl<T: Vectory> Mul<Vector2<T>> for &Vector2<T> {
-	type Output = T;
-
-	fn mul(self, rhs: Vector2<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y
-	}
-}
-impl<T: Vectory> Mul<&Vector2<T>> for &Vector2<T> {
-	type Output = T;
-
-	fn mul(self, rhs: &Vector2<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y
-	}
-}
+impl_vector!(Add, Vector2);
+impl_vector!(Sub, Vector2);
+impl_vector!(Mul, Vector2);
 
 // Vector2 with scalar mul operator definition
 impl<T: Vectory> Mul<T> for Vector2<T> {
@@ -158,10 +141,12 @@ pub struct Vector3<T: Vectory> {
 }
 
 impl<T: Vectory> Vector3<T> {
+  #[allow(dead_code)]
 	pub fn new(x: T, y: T, z: T) -> Self {
 		Vector3 { x, y, z }
 	}
 
+  #[allow(dead_code)]
 	pub fn get_magnitude(&self) -> f64 {
 		let x = self.x.as_();
 		let y = self.y.as_();
@@ -170,6 +155,7 @@ impl<T: Vectory> Vector3<T> {
 		(x*x + y*y + z*z).sqrt()
 	}
 
+  #[allow(dead_code)]
 	pub fn get_rad_dir(&self) -> f64 {
 		let x = self.x.as_();
 		let y = self.y.as_();
@@ -178,106 +164,21 @@ impl<T: Vectory> Vector3<T> {
 		(z.hypot(y)/x).atan()
 	}
 
+  #[allow(dead_code)]
 	pub fn get_deg_dir(&self) -> f64 {
 		self.get_rad_dir() * 57.2958f64
 	}
 }
 
-impl<T: Vectory> Display for Vector3<T> {
+impl<T: Vectory + Display> Display for Vector3<T> {
 	fn fmt(&self, f: &mut Formatter) -> Result {
 		write!(f, "({}, {}, {})", self.x, self.y, self.z)
 	}
 }
 
-// Vector3 add operator definition
-impl<T: Vectory> Add<Vector3<T>> for Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn add(self, rhs: Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z }
-	}
-}
-impl<T: Vectory> Add<&Vector3<T>> for Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn add(self, rhs: &Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z }
-	}
-}
-impl<T: Vectory> Add<Vector3<T>> for &Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn add(self, rhs: Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z }
-	}
-}
-impl<T: Vectory> Add<&Vector3<T>> for &Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn add(self, rhs: &Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z }
-	}
-}
-
-// Vector3 sub operator definition
-impl<T: Vectory> Sub<Vector3<T>> for Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn sub(self, rhs: Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z }
-	}
-}
-impl<T: Vectory> Sub<&Vector3<T>> for Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn sub(self, rhs: &Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z }
-	}
-}
-impl<T: Vectory> Sub<Vector3<T>> for &Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn sub(self, rhs: Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z }
-	}
-}
-impl<T: Vectory> Sub<&Vector3<T>> for &Vector3<T> {
-	type Output = Vector3<T>;
-
-	fn sub(self, rhs: &Vector3<T>) -> Vector3<T> {
-		Vector3 { x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z }
-	}
-}
-
-// Vector3 with Vector3 mul operator definition
-impl<T: Vectory> Mul<Vector3<T>> for Vector3<T> {
-	type Output = T;
-
-	fn mul(self, rhs: Vector3<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-	}
-}
-impl<T: Vectory> Mul<&Vector3<T>> for Vector3<T> {
-	type Output = T;
-
-	fn mul(self, rhs: &Vector3<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-	}
-}
-impl<T: Vectory> Mul<Vector3<T>> for &Vector3<T> {
-	type Output = T;
-
-	fn mul(self, rhs: Vector3<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-	}
-}
-impl<T: Vectory> Mul<&Vector3<T>> for &Vector3<T> {
-	type Output = T;
-
-	fn mul(self, rhs: &Vector3<T>) -> T {
-		self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-	}
-}
+impl_vector!(Add, Vector3);
+impl_vector!(Sub, Vector3);
+impl_vector!(Mul, Vector3);
 
 // Vector3 with scalar mul operator definition
 impl<T: Vectory> Mul<T> for Vector3<T> {
