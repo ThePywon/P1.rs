@@ -196,8 +196,23 @@ impl_assign_matrix!(AddAssign);
 impl_assign_matrix!(SubAssign);
 impl_assign_matrix!(MulAssign);
 
-impl Into<Vector2<f64>> for Matrix<1, 3> {
-  fn into(self) -> Vector2<f64> {
-    Vector2 { x: self.data[0][0], y: self.data[1][0] }
+impl From<Matrix<1, 3>> for Vector2<f64> {
+  fn from(mat: Matrix<1, 3>) -> Self {
+    Vector2 { x: mat.data[0][0], y: mat.data[1][0] }
+  }
+}
+impl From<Vector2<f64>> for Matrix<1, 3> {
+  fn from(vec: Vector2<f64>) -> Self {
+    Matrix { data: [[vec.x], [vec.y], [1f64]] }
+  }
+}
+impl From<Matrix<1, 4>> for Vector3<f64> {
+  fn from(mat: Matrix<1, 4>) -> Self {
+    Vector3 { x: mat.data[0][0], y: mat.data[1][0], z: mat.data[2][0] }
+  }
+}
+impl From<Vector3<f64>> for Matrix<1, 4> {
+  fn from(vec: Vector3<f64>) -> Self {
+    Matrix { data: [[vec.x], [vec.y], [vec.z], [1f64]] }
   }
 }
