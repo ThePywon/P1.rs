@@ -1,28 +1,23 @@
-mod math;
-use math::vectors::Vector2;
-use math::matrix::Matrix;
-//use glfw::Context;
+mod event;
+//use glfw::{Key, Action, Context};
+
+fn on_create() {
+  println!("Window created!");
+}
+
+fn on_close() {
+  println!("Window closed!");
+}
 
 fn main() {
-  let t: Matrix<3> = Matrix::translate([1f64, 2f64, 1f64]);
-  let mut s: Matrix<1, 3> = Matrix::new(0f64);
+	let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+ 
+  let mut p1 = p1::init(glfw);
 
-  s.data = [[2f64], [3f64], [1f64]];
+  p1.event_manager.on(p1::EventType::WindowCreate, on_create);
+  p1.event_manager.on(p1::EventType::WindowClose, on_close);
 
-  println!("{}", t * s);
+  p1.create_window(300, 300, "test", glfw::WindowMode::Windowed);
 
-/* 
-	let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-
-	let (mut window, _) = glfw.create_window(300, 300,
-		"test", glfw::WindowMode::Windowed)
-		.expect("Failed to create GLFW window.");
-
-	window.make_current();
-	window.set_key_polling(true);
-
-	while !window.should_close() {
-		window.swap_buffers();
-		glfw.poll_events();
-	}*/
+  p1.run();
 }

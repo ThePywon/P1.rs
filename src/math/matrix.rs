@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Sub, Mul, AddAssign, SubAssign, MulAssign};
+use super::vectors::{Vector2, Vector3};
 
 // Matrix definition
 #[derive(Clone, Copy)]
@@ -13,15 +14,18 @@ impl<const X: usize, const Y: usize> Matrix<X, Y> {
     let data = [[v; X]; Y];
     Matrix { data }
   }
+}
 
-  pub fn is_square() -> bool { X == Y }
+pub trait SquareMatrix<const X: usize> {
+  fn identity() -> Self;
+  fn scale(values: [f64; X]) -> Self;
+  fn translate(values: [f64; X]) -> Self;
+}
 
+impl<const X: usize> SquareMatrix<X> for Matrix<X> {
   #[allow(dead_code)]
-  pub fn identity() -> Self {
-    if X != Y {
-      panic!("identity matrix MUST be square");
-    }
-    let mut data = [[0f64; X]; Y];
+  fn identity() -> Self {
+    let mut data = [[0f64; X]; X];
     for i in 0..X {
       data[i][i] = 1f64;
     }
@@ -29,11 +33,8 @@ impl<const X: usize, const Y: usize> Matrix<X, Y> {
   }
 
   #[allow(dead_code)]
-  pub fn scale(values: [f64; X]) -> Self {
-    if X != Y {
-      panic!("scaling matrix MUST be square");
-    }
-    let mut data = [[0f64; X]; Y];
+  fn scale(values: [f64; X]) -> Self {
+    let mut data = [[0f64; X]; X];
     for i in 0..values.len() {
       data[i][i] = values[i];
     }
@@ -41,11 +42,8 @@ impl<const X: usize, const Y: usize> Matrix<X, Y> {
   }
 
   #[allow(dead_code)]
-  pub fn translate(values: [f64; X]) -> Self {
-    if X != Y {
-      panic!("translation matrix MUST be square");
-    }
-    let mut data = [[0f64; X]; Y];
+  fn translate(values: [f64; X]) -> Self {
+    let mut data = [[0f64; X]; X];
     for i in 0..X {
       data[i][i] = 1f64;
     }
@@ -115,20 +113,17 @@ macro_rules! impl_matrix {
 
 macro_rules! impl_mul_matrix {
   () => {
-    impl_mul_matrix!(@inner, Matrix<A, B>, Matrix<C, D>);
-    impl_mul_matrix!(@inner, Matrix<A, B>, &Matrix<C, D>);
-    impl_mul_matrix!(@inner, &Matrix<A, B>, Matrix<C, D>);
-    impl_mul_matrix!(@inner, &Matrix<A, B>, &Matrix<C, D>);
+    impl_mul_matrix!(@inner, Matrix<A, B>, Matrix<C, A>);
+    impl_mul_matrix!(@inner, Matrix<A, B>, &Matrix<C, A>);
+    impl_mul_matrix!(@inner, &Matrix<A, B>, Matrix<C, A>);
+    impl_mul_matrix!(@inner, &Matrix<A, B>, &Matrix<C, A>);
   };
 
   (@inner, $lhs:ty, $rhs:ty) => {
-    impl<const A: usize, const B: usize, const C: usize, const D: usize> Mul<$rhs> for $lhs {
+    impl<const A: usize, const B: usize, const C: usize> Mul<$rhs> for $lhs {
       type Output = Matrix<C, B>;
 
       fn mul(self, rhs: $rhs) -> Matrix<C, B> {
-        if A != D {
-          panic!("lhs MUST have a width equal to the height of rhs");
-        }
         let mut data = [[0f64; C]; B];
         let mut result: f64;
         for y in 0..B {
@@ -146,6 +141,78 @@ macro_rules! impl_mul_matrix {
   };
 }
 
+macro_rules! impl_assign_matrix {
+  ($op:ident) => {
+    impl_assign_matrix!(@inner, $op, Self);
+    impl_assign_matrix!(@inner, $op, &Self);
+  };
+
+  (@inner, AddAssign, $rhs:ty) => {
+    impl<const X: usize, const Y: usize> AddAssign<$rhs> for Matrix<X, Y> {
+      fn add_assign(&mut self, rhs: $rhs) {
+        for y in 0..Y {
+          for x in 0..X {
+            self.data[y][x] += rhs.data[y][x];
+          }
+        }
+      }
+    }
+  };
+  (@inner, SubAssign, $rhs:ty) => {
+    impl<const X: usize, const Y: usize> SubAssign<$rhs> for Matrix<X, Y> {
+      fn sub_assign(&mut self, rhs: $rhs) {
+        for y in 0..Y {
+          for x in 0..X {
+            self.data[y][x] -= rhs.data[y][x];
+          }
+        }
+      }
+    }
+  };
+  (@inner, MulAssign, $rhs:ty) => {
+    impl<const X: usize> MulAssign<$rhs> for Matrix<X> {
+      fn mul_assign(&mut self, rhs: $rhs) {
+        let mut data = [[0f64; X]; X];
+        let mut result: f64;
+        for y in 0..X {
+          for x in 0..X {
+            result = 0f64;
+            for i in 0..X {
+              result += self.data[y][i] * rhs.data[i][x];
+            }
+            data[y][x] = result;
+          }
+        }
+        self.data = data;
+      }
+    }
+  }
+}
+
 impl_matrix!(Add);
 impl_matrix!(Sub);
 impl_mul_matrix!();
+impl_assign_matrix!(AddAssign);
+impl_assign_matrix!(SubAssign);
+impl_assign_matrix!(MulAssign);
+
+impl From<Matrix<1, 3>> for Vector2<f64> {
+  fn from(mat: Matrix<1, 3>) -> Self {
+    Vector2 { x: mat.data[0][0], y: mat.data[1][0] }
+  }
+}
+impl From<Vector2<f64>> for Matrix<1, 3> {
+  fn from(vec: Vector2<f64>) -> Self {
+    Matrix { data: [[vec.x], [vec.y], [1f64]] }
+  }
+}
+impl From<Matrix<1, 4>> for Vector3<f64> {
+  fn from(mat: Matrix<1, 4>) -> Self {
+    Vector3 { x: mat.data[0][0], y: mat.data[1][0], z: mat.data[2][0] }
+  }
+}
+impl From<Vector3<f64>> for Matrix<1, 4> {
+  fn from(vec: Vector3<f64>) -> Self {
+    Matrix { data: [[vec.x], [vec.y], [vec.z], [1f64]] }
+  }
+}
