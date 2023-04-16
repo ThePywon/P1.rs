@@ -1,54 +1,23 @@
-mod math;
-use math::vectors::Vector2;
-use math::matrix::Matrix;
 mod event;
-use event::event_manager::KeyOnlyEventManager;
-use glfw::{Action, Context, Key};
+//use glfw::{Key, Action, Context};
 
-fn test() {
-  println!("Call #1");
+fn on_create() {
+  println!("Window created!");
 }
 
-fn test2() {
-  println!("Call #2");
+fn on_close() {
+  println!("Window closed!");
 }
 
 fn main() {
-  let mut event_manager: KeyOnlyEventManager<String> = KeyOnlyEventManager::new();
+	let glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+ 
+  let mut p1 = p1::init(glfw);
 
-  event_manager.on(String::from("start"), test);
-  event_manager.on(String::from("start"), test2);
+  p1.event_manager.on(p1::EventType::WindowCreate, on_create);
+  p1.event_manager.on(p1::EventType::WindowClose, on_close);
 
-  let mut a: Matrix<2> = Matrix::new(1f64);
-  let b: Matrix<2> = Matrix { data: [[1f64, 1f64], [0f64, 1f64]] };
+  p1.create_window(300, 300, "test", glfw::WindowMode::Windowed);
 
-  a *= b;
-
-  let c: Matrix<1, 3> = Matrix::new(1f64);
-
-  println!("{}", a);
-  println!("{}", Vector2::<f64>::from(c));
-
-	let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-
-	let (mut window, events) = glfw.create_window(300, 300,
-		"test", glfw::WindowMode::Windowed)
-		.expect("Failed to create GLFW window.");
-
-	window.make_current();
-	window.set_key_polling(true);
-
-	while !window.should_close() {
-		window.swap_buffers();
-		glfw.poll_events();
-    for (_, event) in glfw::flush_messages(&events) {
-      match event {
-        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-          event_manager.emit(String::from("start"));
-          window.set_should_close(true)
-        },
-        _ => {},
-      }
-    }
-	}
+  p1.run();
 }

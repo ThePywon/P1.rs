@@ -3,13 +3,14 @@ use std::hash::Hash;
 
 #[allow(dead_code)]
 pub struct EventManager<K: Eq + Hash, T> {
-  events: HashMap<K, Vec<fn(&T)>>
+  events: HashMap<K, Vec<fn(&T)>>,
+  funnels: Vec<fn(&K, &T)>
 }
 
 impl<K: Eq + Hash, T> EventManager<K, T> {
   #[allow(dead_code)]
   pub fn new() -> Self {
-    EventManager { events: HashMap::new() }
+    EventManager { events: HashMap::new(), funnels: Vec::new() }
   }
 
   #[allow(dead_code)]
@@ -21,6 +22,11 @@ impl<K: Eq + Hash, T> EventManager<K, T> {
   }
 
   #[allow(dead_code)]
+  pub fn funnel(&mut self, func: fn(&K, &T)) {
+    self.funnels.push(func);
+  }
+
+  #[allow(dead_code)]
   pub fn emit(&self, key: K, value: T) {
     match self.events.get(&key) {
       Some(callbacks) =>
@@ -29,18 +35,22 @@ impl<K: Eq + Hash, T> EventManager<K, T> {
         },
       _ => {}
     }
+    for funnel in self.funnels.iter() {
+      funnel(&key, &value);
+    }
   }
 }
 
 #[allow(dead_code)]
 pub struct KeyOnlyEventManager<K: Eq + Hash> {
-  events: HashMap<K, Vec<fn()>>
+  events: HashMap<K, Vec<fn()>>,
+  funnels: Vec<fn(&K)>
 }
 
 impl<K: Eq + Hash> KeyOnlyEventManager<K> {
   #[allow(dead_code)]
   pub fn new() -> Self {
-    KeyOnlyEventManager { events: HashMap::new() }
+    KeyOnlyEventManager { events: HashMap::new(), funnels: Vec::new() }
   }
 
   #[allow(dead_code)]
@@ -52,6 +62,11 @@ impl<K: Eq + Hash> KeyOnlyEventManager<K> {
   }
 
   #[allow(dead_code)]
+  pub fn funnel(&mut self, func: fn(&K)) {
+    self.funnels.push(func);
+  }
+
+  #[allow(dead_code)]
   pub fn emit(&self, key: K) {
     match self.events.get(&key) {
       Some(callbacks) =>
@@ -59,6 +74,9 @@ impl<K: Eq + Hash> KeyOnlyEventManager<K> {
           callback();
         },
       _ => {}
+    }
+    for funnel in self.funnels.iter() {
+      funnel(&key);
     }
   }
 }
