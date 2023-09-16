@@ -1,13 +1,12 @@
 use std::any::TypeId;
-use uuid::Uuid;
 
 pub trait Component {
-  
+  fn get_entity_id(&self) -> usize;
 }
 
 static mut REGISTERED_TYPE_IDS: Vec<TypeId> = vec![];
 
-pub fn get_component_id<T: Component + 'static>() -> usize {
+pub fn get_component_t_id<T: Component + 'static>() -> usize {
   let typeid = TypeId::of::<T>();
 
   unsafe {

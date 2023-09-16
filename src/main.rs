@@ -1,15 +1,8 @@
 use sdl2::video::GLProfile;
 use sdl2::audio::AudioSpecDesired;
 use p1::audio::wav_player::WavPlayer;
-use p1::ecs::component;
-
-fn on_create() {
-  println!("Window created!");
-}
-
-fn on_close() {
-  println!("Window closed!");
-}
+#[allow(unused_imports)]
+use p1::ecs::entity::Scene;
 
 fn main() {
   let sdl_context = sdl2::init().unwrap();
@@ -36,16 +29,23 @@ fn main() {
 
   let mut p1 = p1::init(glfw);
 
-  p1.event_manager.on(p1::EventType::WindowCreate, on_create);
-  p1.event_manager.on(p1::EventType::WindowClose, on_close);
+  p1.event_manager.on(p1::EventType::WindowCreate, |_| {
+    println!("Window created!");
+  });
+  p1.event_manager.on(p1::EventType::WindowClose, |_| {
+    println!("Window closed!");
+  });
 
   let (_, event_manager) = p1.create_window(300, 300, "Engine", glfw::WindowMode::Windowed);
 
-  event_manager.on(p1::WindowEventType::Update, update);
+  event_manager.on(p1::WindowEventType::Update, |_| {
+
+  });
+
+  let scene = &mut Scene::new();
+  p1.register_scene(scene);
+
+  //let entity_a = Entity::new(scene);
 
   p1.run();
-}
-
-fn update() {
-  //println!("Called!");
 }

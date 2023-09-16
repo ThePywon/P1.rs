@@ -1,24 +1,31 @@
-use uuid::Uuid;
-use super::component::{Component, get_component_id};
+use super::component::{Component, get_component_t_id};
 use std::collections::HashMap;
 
-pub struct Entity {
-  scene: &'static mut Scene,
-  pub id: Uuid,
-  component_mask: usize
-}
-
 pub struct Scene {
-  pub component_pools: HashMap<usize, HashMap<Uuid, Box<dyn Component>>>,
-  pub entities: Vec<Entity>
+  component_pools: HashMap<usize, HashMap<usize, Box<dyn Component>>>,
+  pub entities: HashMap<usize, usize>
 }
 
 impl Scene {
   pub fn new() -> Self {
-    Scene { component_pools: HashMap::new(), entities: Vec::new() }
+    Scene { component_pools: HashMap::new(), entities: HashMap::new() }
   }
 
-  fn add_component(&mut self, c_id: usize, entity: Uuid, component: Box<dyn Component + 'static>) {
+  pub fn create_entity(&mut self) -> usize {
+    self.entities.insert(0, 0);
+    0
+  }
+
+  pub fn add_component<C: Component + 'static>(&mut self, entity: usize, component: Box<dyn Component>) {
+    let c_id = get_component_t_id::<C>();
+    let c_bit: usize = 1 << c_id;
+
+    let c_mask = self.entities.get_mut(&entity).unwrap();
+
+    if *c_mask & c_bit != 0 { return; }
+
+    *c_mask ^= c_bit;
+
     match self.component_pools.get_mut(&c_id) {
       Some(pool) => {
         pool.insert(entity, component);
@@ -29,38 +36,21 @@ impl Scene {
     }
   }
 
-  fn remove_component(&mut self, c_id: usize, entity: Uuid) {
+  pub fn remove_component<C: Component + 'static>(&mut self, entity: usize) {
+    let c_id = get_component_t_id::<C>();
+    let c_bit: usize = 1 << c_id;
+
+    let c_mask = self.entities.get_mut(&entity).unwrap();
+
+    if *c_mask & c_bit == 0 { return; }
+
+    *c_mask ^= c_bit;
+
     match self.component_pools.get_mut(&c_id) {
       Some(pool) => {
         pool.remove(&entity);
       },
       _ => {}
-    }
-  }
-}
-
-impl Entity {
-  pub fn new(scene: &'static mut Scene) -> Self {
-    Entity { scene, id: Uuid::new_v4(), component_mask: 0 }
-  }
-
-  pub fn add_component<C: Component + 'static>(&mut self, component: C) {
-    let c_id = get_component_id::<C>();
-    let c_bit: usize = 1 << c_id;
-
-    if self.component_mask & c_bit == 0 {
-      self.component_mask ^= c_bit;
-      self.scene.add_component(c_id, self.id, Box::new(component));
-    }
-  }
-
-  pub fn remove_component<C: Component + 'static>(&mut self) {
-    let c_id = get_component_id::<C>();
-    let c_bit: usize = 1 << c_id;
-
-    if self.component_mask & c_bit != 0 {
-      self.component_mask ^= c_bit;
-      self.scene.remove_component(c_id, self.id);
     }
   }
 }

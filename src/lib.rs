@@ -6,19 +6,10 @@ pub mod ecs;
 use std::sync::mpsc::Receiver;
 
 use glfw::{Glfw, Window, WindowMode, Context, WindowEvent};
-use event::event_manager::KeyOnlyEventManager;
+use event::event_manager::EventManager;
 use num_traits::ToPrimitive;
 use std::mem::{size_of, size_of_val};
-use ecs::{component::{Component, get_component_id}, entity::Scene};
-
-struct A();
-impl Component for A{}
-
-struct B();
-impl Component for B{}
-
-struct C();
-impl Component for C{}
+use ecs::entity::Scene;
 
 #[derive(PartialEq, Eq, Hash)]
 pub enum EventType {
@@ -31,19 +22,21 @@ pub enum WindowEventType {
   Update
 }
 
-pub struct P1 {
+pub struct P1<'a> {
   glfw: Glfw,
-  windows: Vec<(Window, Receiver<(f64, WindowEvent)>, KeyOnlyEventManager<WindowEventType>)>,
-  scenes: Vec<Scene>,
-  pub event_manager: KeyOnlyEventManager<EventType>
+  windows: Vec<(Window, Receiver<(f64, WindowEvent)>, EventManager<WindowEventType, ()>)>,
+  scenes: Vec<&'a mut Scene>,
+  pub event_manager: EventManager<EventType, ()>
 }
 
-pub fn init(glfw: Glfw) -> P1 {
-  P1 { glfw, windows: Vec::new(), scenes: Vec::new(), event_manager: KeyOnlyEventManager::new() }
+pub fn init<'a>(glfw: Glfw) -> P1<'a> {
+  P1 { glfw, windows: Vec::new(), scenes: Vec::new(), event_manager: EventManager::new() }
 }
 
-impl P1 {
-  pub fn create_window(&mut self, width: u32, height: u32, title: &str, mode: WindowMode<'_>) -> (&mut Window, &mut KeyOnlyEventManager<WindowEventType>) {
+impl<'a> P1<'a> {
+  pub fn create_window(&mut self, width: u32, height: u32, title: &str, mode: WindowMode<'_>) -> (&mut Window, &mut EventManager<WindowEventType, ()>) {
+    self.glfw.window_hint(glfw::WindowHint::TransparentFramebuffer(true));
+
     let (mut window, events) = self.glfw.create_window(width, height, title, mode)
       .expect("Failed to create GLFW window.");
 
@@ -53,24 +46,19 @@ impl P1 {
     window.set_key_polling(true);
     window.set_refresh_polling(true);
 
-    self.windows.push((window, events, KeyOnlyEventManager::new()));
-    self.event_manager.emit(EventType::WindowCreate);
+    self.windows.push((window, events, EventManager::new()));
+    self.event_manager.emit(EventType::WindowCreate, ());
 
     let last = self.windows.len() - 1;
     let (window, _, event_manager) = &mut self.windows[last];
     (window, event_manager)
   }
 
-  pub fn run(&mut self) {
-    println!("{}", get_component_id::<A>());
-    println!("{}", get_component_id::<B>());
-    println!("{}", get_component_id::<A>());
-    println!("{}", get_component_id::<C>());
-    println!("{}", get_component_id::<B>());
-    println!("{}", get_component_id::<B>());
-    println!("{}", get_component_id::<C>());
-    println!("{}", get_component_id::<A>());
+  pub fn register_scene(&mut self, scene: &'a mut Scene) {
+    self.scenes.push(scene);
+  }
 
+  pub fn run(&mut self) {
     while self.windows.len() > 0 {
       self.glfw.poll_events();
 
@@ -96,7 +84,7 @@ impl P1 {
         let (x, y) = window.get_pos();
 
         unsafe {
-          gl::ClearColor(x.to_f32().unwrap() / 1080f32, y.to_f32().unwrap() / 960f32, 0f32, 1f32);
+          gl::ClearColor(x.to_f32().unwrap() / 1080f32, y.to_f32().unwrap() / 960f32, 0f32, 0f32);
           gl::Clear(gl::COLOR_BUFFER_BIT);
 
           let mut vao = 0;
@@ -212,7 +200,7 @@ impl P1 {
           gl::DeleteProgram(shader_program);
         }
 
-        event_manager.emit(WindowEventType::Update);
+        event_manager.emit(WindowEventType::Update, ());
         
         window.swap_buffers();
       }
@@ -220,7 +208,7 @@ impl P1 {
       if bad_windows.len() > 0 {
         for bad_window in bad_windows {
           self.windows.remove(bad_window);
-          self.event_manager.emit(EventType::WindowClose);
+          self.event_manager.emit(EventType::WindowClose, ());
         }
       }
     }
