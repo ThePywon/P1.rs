@@ -10,7 +10,7 @@ use event::event_manager::EventManager;
 use num_traits::ToPrimitive;
 use std::mem::{size_of, size_of_val};
 use std::collections::HashMap;
-use ecs::entity::Scene;
+use ecs::scene::Scene;
 
 #[derive(PartialEq, Eq, Hash)]
 pub enum EventType {
@@ -74,6 +74,11 @@ impl P1 {
       let mut bad_windows: Vec<usize> = Vec::new();
 
       for (index, (window, events, event_manager)) in self.windows.iter_mut().enumerate() {
+        if window.should_close() {
+          bad_windows.push(index);
+          continue;
+        }
+
         for (_, event) in glfw::flush_messages(events) {
           match event {
             glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {

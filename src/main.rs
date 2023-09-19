@@ -2,7 +2,7 @@ use sdl2::video::GLProfile;
 use sdl2::audio::AudioSpecDesired;
 use p1::audio::wav_player::WavPlayer;
 #[allow(unused_imports)]
-use p1::ecs::entity::Scene;
+use p1::ecs::scene::Scene;
 
 fn main() {
   let sdl_context = sdl2::init().unwrap();
@@ -36,7 +36,7 @@ fn main() {
     println!("Window closed!");
   });
 
-  let (_, event_manager) = p1.create_window(300, 300, "Engine", glfw::WindowMode::Windowed);
+  let (_, event_manager) = p1.create_window(300, 300, "Moist", glfw::WindowMode::Windowed);
 
   event_manager.on(p1::WindowEventType::Update, |_| {
     
