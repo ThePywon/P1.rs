@@ -39,13 +39,15 @@ fn main() {
   let (_, event_manager) = p1.create_window(300, 300, "Engine", glfw::WindowMode::Windowed);
 
   event_manager.on(p1::WindowEventType::Update, |_| {
-
+    
   });
 
-  let scene = &mut Scene::new();
-  p1.register_scene(scene);
+  let scene_id = p1.register_scene(Scene::new());
+  let scene = p1.get_scene(scene_id).unwrap();
 
-  //let entity_a = Entity::new(scene);
+  let entity_a = scene.create_entity();
+
+  println!("{}", entity_a);
 
   p1.run();
 }

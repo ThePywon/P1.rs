@@ -2,29 +2,34 @@ use super::component::{Component, get_component_t_id};
 use std::collections::HashMap;
 
 pub struct Scene {
-  component_pools: HashMap<usize, HashMap<usize, Box<dyn Component>>>,
+  component_pools: HashMap<usize, HashMap<usize, &'static dyn Component>>,
   pub entities: HashMap<usize, usize>,
-  next_entity_id: usize
+  freed_ids: Vec<usize>
 }
 
 impl Scene {
   pub fn new() -> Self {
-    Scene { component_pools: HashMap::new(), entities: HashMap::new(), next_entity_id: 0 }
-  }
-
-  fn create_entity_id(&mut self) -> usize {
-    let result = self.next_entity_id;
-    self.next_entity_id += 1;
-    result
+    Scene { component_pools: HashMap::new(), entities: HashMap::new(), freed_ids: Vec::new() }
   }
 
   pub fn create_entity(&mut self) -> usize {
-    let id = self.create_entity_id();
+    let id;
+    if let Some(value) = self.freed_ids.pop() {
+      id = value;
+    }
+    else {
+      id = self.entities.len();
+    }
     self.entities.insert(id, 0);
     id
   }
 
-  pub fn add_component<C: Component + 'static>(&mut self, entity: usize, component: Box<dyn Component>) {
+  pub fn remove_entity(&mut self, id: usize) {
+    self.entities.remove(&id);
+    self.freed_ids.push(id);
+  }
+
+  pub fn add_component<C: Component + 'static>(&mut self, entity: usize, component: &'static dyn Component) {
     let c_id = get_component_t_id::<C>();
     let c_bit: usize = 1 << c_id;
 

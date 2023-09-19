@@ -5,10 +5,11 @@ pub mod ecs;
 
 use std::sync::mpsc::Receiver;
 
-use glfw::{Glfw, Window, WindowMode, Context, WindowEvent};
+use glfw::{Glfw, Window, WindowMode, Context, WindowEvent, Monitor};
 use event::event_manager::EventManager;
 use num_traits::ToPrimitive;
 use std::mem::{size_of, size_of_val};
+use std::collections::HashMap;
 use ecs::entity::Scene;
 
 #[derive(PartialEq, Eq, Hash)]
@@ -22,18 +23,19 @@ pub enum WindowEventType {
   Update
 }
 
-pub struct P1<'a> {
+pub struct P1 {
   glfw: Glfw,
   windows: Vec<(Window, Receiver<(f64, WindowEvent)>, EventManager<WindowEventType, ()>)>,
-  scenes: Vec<&'a mut Scene>,
+  scenes: HashMap<usize, Scene>,
+  next_scene_id: usize,
   pub event_manager: EventManager<EventType, ()>
 }
 
-pub fn init<'a>(glfw: Glfw) -> P1<'a> {
-  P1 { glfw, windows: Vec::new(), scenes: Vec::new(), event_manager: EventManager::new() }
+pub fn init(glfw: Glfw) -> P1 {
+  P1 { glfw, windows: Vec::new(), scenes: HashMap::new(), next_scene_id: 0, event_manager: EventManager::new() }
 }
 
-impl<'a> P1<'a> {
+impl P1 {
   pub fn create_window(&mut self, width: u32, height: u32, title: &str, mode: WindowMode<'_>) -> (&mut Window, &mut EventManager<WindowEventType, ()>) {
     self.glfw.window_hint(glfw::WindowHint::TransparentFramebuffer(true));
 
@@ -54,8 +56,15 @@ impl<'a> P1<'a> {
     (window, event_manager)
   }
 
-  pub fn register_scene(&mut self, scene: &'a mut Scene) {
-    self.scenes.push(scene);
+  pub fn register_scene(&mut self, scene: Scene) -> usize {
+    let id = self.next_scene_id;
+    self.scenes.insert(id, scene);
+    self.next_scene_id += 1;
+    id
+  }
+
+  pub fn get_scene(&mut self, id: usize) -> Option<&mut Scene> {
+    self.scenes.get_mut(&id)
   }
 
   pub fn run(&mut self) {
@@ -65,15 +74,12 @@ impl<'a> P1<'a> {
       let mut bad_windows: Vec<usize> = Vec::new();
 
       for (index, (window, events, event_manager)) in self.windows.iter_mut().enumerate() {
-        if window.should_close() {
-          bad_windows.push(index);
-          continue
-        }
-
         for (_, event) in glfw::flush_messages(events) {
           match event {
             glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
               window.set_should_close(true);
+              bad_windows.push(index);
+              continue;
             },
             _ => {}
           }
@@ -81,10 +87,14 @@ impl<'a> P1<'a> {
 
         window.make_current();
 
-        let (x, y) = window.get_pos();
-
         unsafe {
-          gl::ClearColor(x.to_f32().unwrap() / 1080f32, y.to_f32().unwrap() / 960f32, 0f32, 0f32);
+          if let Some(mode) = Monitor::get_video_mode(&Monitor::from_primary()) {
+            let (x, y) = window.get_pos();
+            gl::ClearColor(x.to_f32().unwrap() / mode.width as f32 * 0.5f32, y.to_f32().unwrap() / mode.height as f32 * 0.5f32, 0f32, 0.5f32);
+          }
+          else {
+            gl::ClearColor(0f32, 0f32, 0f32, 1f32);
+          }
           gl::Clear(gl::COLOR_BUFFER_BIT);
 
           let mut vao = 0;

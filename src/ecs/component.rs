@@ -1,7 +1,7 @@
 use std::any::TypeId;
 
 pub trait Component {
-  fn get_entity_id(&self) -> usize;
+  
 }
 
 static mut REGISTERED_TYPE_IDS: Vec<TypeId> = vec![];
